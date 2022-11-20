@@ -10,8 +10,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
-  console.log(process.env.DATABASE_URL);
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

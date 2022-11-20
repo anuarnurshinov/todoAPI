@@ -1,8 +1,16 @@
-import { Controller, Request, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Request,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { User as UserModel } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
 
 @Controller()
@@ -23,5 +31,11 @@ export class UserController {
     @Body() userData: { password: string; name?: string; email: string },
   ): Promise<UserModel> {
     return this.userService.createUser(userData);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 }

@@ -1,3 +1,4 @@
+import fastifyCookie from '@fastify/cookie';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
@@ -10,6 +11,9 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+  await app.register(fastifyCookie, {
+    secret: process.env.JWT_SECRET, // for cookies signature
+  });
 
   await app.listen(3001);
 }

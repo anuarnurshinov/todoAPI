@@ -5,13 +5,18 @@ import {
   Body,
   UseGuards,
   Get,
+  Res,
+  Req,
+  Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-
-import { User as UserModel } from '@prisma/client';
+import { FastifyReply } from 'fastify';
+import { User, User as UserModel } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
+import { FastifyRequest } from 'fastify';
+import { ReqCustom } from '../types/types';
 
 @Controller()
 export class UserController {
@@ -21,21 +26,36 @@ export class UserController {
   ) {}
 
   @UseGuards(AuthGuard('local'))
-  @Post('auth/login')
-  async login(@Request() req) {
-    return this.authService.login(req.user);
+  @Post('/login')
+  async login(@Request() req, @Res({ passthrough: true }) res: FastifyReply) {
+    const { access_token } = await this.authService.signToken(req.user);
+    res.setCookie('jwt', access_token);
+    return req.user;
   }
 
-  @Post('user')
+  @Post('/signup')
   async signupUser(
-    @Body() userData: { password: string; name?: string; email: string },
-  ): Promise<UserModel> {
-    return this.userService.createUser(userData);
+    @Body() userData: User,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ): Promise<User> {
+    const newUser = await this.userService.createUser(userData);
+    const { access_token } = await this.authService.signToken(newUser);
+    res.setCookie('jwt', access_token);
+    return newUser;
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @Get('/profile')
+  getProfile(@Req() req: ReqCustom) {
+    return this.userService.user({ id: req.user.userId.toString() });
+  }
+
+  @Get('/users')
+  getAllUsers() {
+    return this.userService.users({});
+  }
+  @Delete('/users')
+  deleteAllUsers() {
+    return this.userService.deleteAllUsers();
   }
 }

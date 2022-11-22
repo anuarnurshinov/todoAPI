@@ -53,4 +53,9 @@ export class UserService {
       where,
     });
   }
+  async deleteAllUsers() {
+    return this.prisma.user.deleteMany({
+      where: {},
+    });
+  }
 }

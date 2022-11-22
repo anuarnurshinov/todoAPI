@@ -7,21 +7,36 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://admin:123456@localhost:5432/toDoDB?schema=public"
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  password String
-  posts    Post[]
+  id        String     @id @default(cuid())
+  username  String     @unique
+  password  String
+  created   TaskList[]
+  canEdit   TaskList[] @relation("CanEdit")
+  canSee    TaskList[] @relation("CanSee")
+  canDelete TaskList[] @relation("CanDelete")
+  canCreate TaskList[] @relation("CanCreate")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+model TaskList {
+  id          String @id @default(cuid())
+  title       String @unique
+  createdBy   User   @relation(fields: [authorId], references: [id])
+  authorId    String
+  tasks       Task[]
+  canEditBy   User[] @relation("CanEdit")
+  canSeeBy    User[] @relation("CanSee")
+  canDeleteBy User[] @relation("CanDelete")
+  canCreateBy User[] @relation("CanCreate")
+}
+
+model Task {
+  id         String    @id @default(cuid())
+  title      String    @unique
+  isDone     Boolean
+  TaskList   TaskList? @relation(fields: [taskListId], references: [id])
+  taskListId String?
 }

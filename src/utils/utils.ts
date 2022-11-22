@@ -41,4 +41,23 @@ export class Utils {
       hasCreateRight,
     };
   }
+
+  async getTaskList(id: string, prisma: PrismaService) {
+    return await prisma.taskList.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async checkIsItPossible(taskListId, userId, prisma, right) {
+    const taskList = await this.getTaskList(taskListId, prisma);
+    const rightsObject = await this.toCheckIsItAllow(
+      taskListId,
+      userId,
+      prisma,
+    );
+    if (taskList && (rightsObject[right] || rightsObject.isOwner)) return true;
+    return false;
+  }
 }

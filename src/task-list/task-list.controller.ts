@@ -10,7 +10,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TaskListService } from './task-list.service';
-import { UpdateTaskListDto } from './dto/update-task-list.dto';
 import { TaskList } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserService } from 'src/user/user.service';

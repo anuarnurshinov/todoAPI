@@ -36,7 +36,7 @@ model TaskList {
 model Task {
   id         String    @id @default(cuid())
   title      String    @unique
-  isDone     Boolean
+  isDone     Boolean   @default(false)
   TaskList   TaskList? @relation(fields: [taskListId], references: [id])
   taskListId String?
 }

@@ -1,9 +1,6 @@
-import { Injectable, Req } from '@nestjs/common';
-import { CreateTaskListDto } from './dto/create-task-list.dto';
-import { UpdateTaskListDto } from './dto/update-task-list.dto';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TaskList } from '@prisma/client';
-import { ReqCustom } from '../types/types';
 import { RightsDto } from './dto/rights.dto';
 import { Utils } from '../utils/utils';
 

@@ -64,11 +64,12 @@ export class TaskListService {
     });
   }
 
-  async findOne(id: string, userId: number): Promise<TaskList> {
-    const res = await this.prisma.taskList.findMany({
+  async findOne(id: string, userId: number): Promise<TaskList[]> {
+    console.log(id);
+    return await this.prisma.taskList.findMany({
       where: {
         AND: [
-          { id: id },
+          { id },
           {
             OR: [
               {
@@ -91,12 +92,23 @@ export class TaskListService {
                   some: { id: userId.toString() },
                 },
               },
+              {
+                createdBy: {
+                  id: userId.toString(),
+                },
+              },
             ],
           },
         ],
       },
+      include: {
+        canCreateBy: true,
+        canDeleteBy: true,
+        canEditBy: true,
+        canSeeBy: true,
+        createdBy: true,
+      },
     });
-    return res[0];
   }
 
   async giveRights(right: RightsDto, taskListId: string): Promise<TaskList> {

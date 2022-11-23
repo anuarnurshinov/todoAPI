@@ -1,8 +1,19 @@
 import { PrismaService } from 'prisma/prisma.service';
+import { TaskList } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 
+interface userRights {
+  canEdit: boolean;
+  canDelete: boolean;
+  canCreate: boolean;
+  canSee: boolean;
+  isOwner: boolean;
+}
+@Injectable()
 export class Utils {
-  async toCheckIsItAllow(id: string, userId: number, prisma: PrismaService) {
-    const user = await prisma.user.findUnique({
+  constructor(private readonly prisma: PrismaService) {}
+  async checkUserRights(id: string, userId: number): Promise<userRights> {
+    const user = await this.prisma.user.findUnique({
       where: {
         id: userId.toString(),
       },
@@ -11,52 +22,46 @@ export class Utils {
         created: true,
         canDelete: true,
         canCreate: true,
+        canSee: true,
       },
     });
 
-    const hasEditRight = user.canEdit.find((el) => {
-      return el.id === id;
-    });
-
-    const isOwner = user.created.find((el) => {
-      console.log(el);
-      console.log(el.id);
-      console.log(id);
-
-      return el.id === id;
-    });
-
-    const hasDeleteRight = user.canDelete.find((el) => {
-      return el.id === id;
-    });
-
-    const hasCreateRight = user.canCreate.find((el) => {
-      return el.id === id;
-    });
-
-    return {
-      hasEditRight,
-      isOwner,
-      hasDeleteRight,
-      hasCreateRight,
+    const rightsObj = {
+      canEdit: false,
+      canDelete: false,
+      canCreate: false,
+      canSee: false,
+      created: false,
     };
+
+    for (const el in rightsObj) {
+      rightsObj[el] = user[el].find((el: TaskList) => {
+        return el.id === id;
+      })
+        ? true
+        : false;
+    }
+
+    return { ...rightsObj, isOwner: rightsObj.created };
   }
 
-  async getTaskList(id: string, prisma: PrismaService) {
-    return await prisma.taskList.findUnique({
+  async getTaskList(id: string) {
+    return await this.prisma.taskList.findUnique({
       where: {
         id,
       },
     });
   }
 
-  async checkIsItPossible(taskListId, userId, prisma, right) {
-    const taskList = await this.getTaskList(taskListId, prisma);
-    const rightsObject = await this.toCheckIsItAllow(
-      taskListId,
-      userId,
-      prisma,
-    );
+  async checkIsItPossible(
+    taskListId: string,
+    userId: number,
+
+    right: 'canEdit' | 'canDelete' | 'canCreate' | 'canSee',
+  ) {
+    const taskList = await this.getTaskList(taskListId);
+    const rightsObject = await this.checkUserRights(taskListId, userId);
+
     if (taskList && (rightsObject[right] || rightsObject.isOwner)) return true;
     return false;
   }

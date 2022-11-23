@@ -6,9 +6,9 @@ import {
   Patch,
   Param,
   Delete,
-  ParamData,
   Req,
   UseGuards,
+  ParamData,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -30,29 +30,56 @@ export class TaskController {
   @Post()
   async create(
     @Body() createTaskDto: CreateTaskDto,
+    @Param('tasklist') taskListId: ParamData,
+    @Req() req: ReqCustom,
+  ) {
+    return this.taskService.create(
+      createTaskDto,
+      taskListId.toString(),
+      req.user.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll(@Param('tasklist') taskListId: ParamData, @Req() req: ReqCustom) {
+    return this.taskService.findAll(taskListId.toString(), req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(
+    @Param('id') id: string,
     @Param('tasklist') taskListId: string,
     @Req() req: ReqCustom,
   ) {
-    return this.taskService.create(createTaskDto, taskListId, req.user.userId);
+    return this.taskService.findOne(id, taskListId, req.user.userId);
   }
+
   @UseGuards(JwtAuthGuard)
-  @Get()
-  findAll(@Param('tasklist') taskListId: string, @Req() req: ReqCustom) {
-    return this.taskService.findAll(taskListId, req.user.userId);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.taskService.update(+id, updateTaskDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @Param('tasklist') taskListId: string,
+    @Req() req: ReqCustom,
+  ) {
+    return this.taskService.update(
+      id,
+      updateTaskDto,
+      taskListId,
+      req.user.userId,
+    );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.taskService.remove(+id);
+  remove(
+    @Param('id') id: string,
+    @Param('tasklist') taskListId: string,
+    @Req() req: ReqCustom,
+  ) {
+    this.taskService.remove(id, taskListId, req.user.userId);
+    return null;
   }
 }

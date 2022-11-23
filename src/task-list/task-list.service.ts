@@ -61,9 +61,8 @@ export class TaskListService {
     });
   }
 
-  async findOne(id: string, userId: number): Promise<TaskList[]> {
-    console.log(id);
-    return await this.prisma.taskList.findMany({
+  async findOne(id: string, userId: number): Promise<TaskList> {
+    const [taskList] = await this.prisma.taskList.findMany({
       where: {
         AND: [
           { id },
@@ -106,6 +105,7 @@ export class TaskListService {
         createdBy: true,
       },
     });
+    return taskList;
   }
 
   async giveRights(right: RightsDto, taskListId: string): Promise<TaskList> {
@@ -132,19 +132,15 @@ export class TaskListService {
 
   async updateName(
     id: string,
-    tittle: string,
+    title: string,
     userId: number,
   ): Promise<TaskList> {
-    const { hasEditRight, isOwner } = await this.utils.toCheckIsItAllow(
-      id,
-      userId,
-      this.prisma,
-    );
-    if (hasEditRight || isOwner)
+    const { canEdit, isOwner } = await this.utils.checkUserRights(id, userId);
+    if (canEdit || isOwner)
       return this.prisma.taskList.update({
         data: {
           title: {
-            set: tittle,
+            set: title,
           },
         },
         where: {
@@ -155,13 +151,11 @@ export class TaskListService {
   }
 
   async remove(id: string, userId: number) {
-    const { hasDeleteRight, isOwner } = await this.utils.toCheckIsItAllow(
-      id,
-      userId,
-      this.prisma,
-    );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    const { canDelete, isOwner } = await this.utils.checkUserRights(id, userId);
 
-    if (hasDeleteRight || isOwner)
+    if (canDelete || isOwner)
       return this.prisma.taskList.delete({
         where: {
           id,

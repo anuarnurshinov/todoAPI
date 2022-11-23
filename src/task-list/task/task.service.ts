@@ -13,34 +13,97 @@ export class TaskService {
     taskListId: string,
     userId: number,
   ) {
-    const taskList = await this.utils.getTaskList(taskListId, this.prisma);
-    const { hasCreateRight, isOwner } = await this.utils.toCheckIsItAllow(
+    const isItPossible = await this.utils.checkIsItPossible(
       taskListId,
       userId,
-      this.prisma,
+      'canCreate',
     );
     createTaskDto.taskListId = taskListId;
 
-    if (taskList && (hasCreateRight || isOwner))
+    if (isItPossible)
       return this.prisma.task.create({
         data: createTaskDto,
       });
     throw new Error('Oops');
   }
 
-  findAll(taskListId: string, userId: number) {
-    return;
+  async findAll(taskListId: string, userId: number) {
+    const isItPossible = await this.utils.checkIsItPossible(
+      taskListId,
+      userId,
+      'canSee',
+    );
+    if (isItPossible)
+      return this.prisma.task.findMany({
+        where: {
+          taskListId: taskListId,
+        },
+      });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  async findOne(id: string, taskListId: string, userId: number) {
+    const isItPossible = await this.utils.checkIsItPossible(
+      taskListId,
+      userId,
+      'canSee',
+    );
+    if (isItPossible) {
+      const [task] = await this.prisma.task.findMany({
+        where: {
+          AND: [
+            {
+              id,
+            },
+            {
+              taskListId,
+            },
+          ],
+        },
+      });
+      return task;
+    }
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    taskListId: string,
+    userId: number,
+  ) {
+    const isItPossible = await this.utils.checkIsItPossible(
+      taskListId,
+      userId,
+      'canSee',
+    );
+
+    if (isItPossible)
+      return this.prisma.task.update({
+        data: {
+          isDone: {
+            set: updateTaskDto.isDone,
+          },
+          title: {
+            set: updateTaskDto.title,
+          },
+        },
+        where: {
+          id,
+        },
+      });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async remove(id: string, taskListId: string, userId: number) {
+    const isItPossible = await this.utils.checkIsItPossible(
+      taskListId,
+      userId,
+      'canSee',
+    );
+
+    if (isItPossible)
+      return this.prisma.task.delete({
+        where: {
+          id,
+        },
+      });
   }
 }
